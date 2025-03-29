@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chiret Study App</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="manifest" href="manifest.json">
+</head>
+<body>
+    <div id="login-section">
+        <h2>Welcome to Chiret Study App</h2>
+        <input type="email" id="email" placeholder="Enter your BDU email">
+        <button onclick="login()">Login</button>
+    </div>
+    <div id="departments" style="display:none;">
+        <h2>Select Your Department</h2>
+        <button onclick="showCourses('economics')">Economics</button>
+        <button onclick="showCourses('accounting')">Accounting</button>
+    </div>
+    <div id="courses" style="display:none;">
+        <h2>Select a Course</h2>
+    </div>
+    <div id="notes" style="display:none;">
+        <h2>Notes</h2>
+        <div id="note-content"></div>
+    </div>
+    <div id="quizzes" style="display:none;">
+        <h2>Quizzes</h2>
+        <div id="quiz-container"></div>
+    </div>
+    <div id="settings">
+        <button onclick="toggleDarkMode()">Toggle Dark Mode</button>
+        <button onclick="adjustFontSize()">Increase Font Size</button>
+    </div>
+    <script src="app.js"></script>
+    <script src="service-worker.js"></script>
+</body>
+</html>
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    color: #333;
+    text-align: center;
+    padding: 20px;
+}
+
+button {
+    background-color: #6200ea;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    margin: 10px;
+    cursor: pointer;
+    font-size: 16px;
+    border-radius: 5px;
+}
+
+button:hover {
+    background-color: #3700b3;
+}
+
+#settings {
+    margin-top: 20px;
+}
+
+.dark-mode {
+    background-color: #333;
+    color: white;
+}
+
+.hidden {
+    display: none;
+}
+function login() {
+    let email = document.getElementById('email').value;
+    if (email.endsWith('@bdu.edu.et')) {
+        document.getElementById('login-section').style.display = 'none';
+        document.getElementById('departments').style.display = 'block';
+    } else {
+        alert('Only BDU email addresses are allowed!');
+    }
+}
+
+function showCourses(department) {
+    let courses = {
+        economics: ['Econometrics 2', 'International Economics 2', 'Developmental Economics 2', 'Industrial Economics', 'Economic Planning', 'Research'],
+        accounting: ['Accounting 1', 'Accounting 2', 'Research', 'Econometrics']
+    };
+    
+    let courseSection = document.getElementById('courses');
+    courseSection.innerHTML = '<h2>Select a Course</h2>';
+    courses[department].forEach(course => {
+        let btn = document.createElement('button');
+        btn.innerText = course;
+        btn.onclick = () => showNotes(course);
+        courseSection.appendChild(btn);
+    });
+    
+    document.getElementById('departments').style.display = 'none';
+    courseSection.style.display = 'block';
+}
+
+function showNotes(course) {
+    document.getElementById('courses').style.display = 'none';
+    document.getElementById('notes').style.display = 'block';
+    document.getElementById('note-content').innerText = `Notes for ${course} will be displayed here.`;
+    
+    let quizBtn = document.createElement('button');
+    quizBtn.innerText = 'Take Quiz';
+    quizBtn.onclick = () => showQuiz(course);
+    document.getElementById('notes').appendChild(quizBtn);
+}
+
+function showQuiz(course) {
+    document.getElementById('notes').style.display = 'none';
+    document.getElementById('quizzes').style.display = 'block';
+    let quizContainer = document.getElementById('quiz-container');
+    quizContainer.innerHTML = `<h3>Quiz for ${course}</h3>`;
+    
+    let question = document.createElement('p');
+    question.innerText = 'Sample Question: What is the main concept of this course?';
+    quizContainer.appendChild(question);
+    
+    let answerBtn = document.createElement('button');
+    answerBtn.innerText = 'Show Answer';
+    answerBtn.onclick = () => alert('Sample Answer: The main concept is XYZ.');
+    quizContainer.appendChild(answerBtn);
+}
+{
+  "name": "Chiret Study App",
+  "short_name": "Chiret",
+  "description": "A Progressive Web App (PWA) for BDU students, providing notes, quizzes, and a department-wise course structure.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#6200ea",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
+self.addEventListener('install', function(event) {
+  event.waitUntil(
+    caches.open('chiret-cache').then(function(cache) {
+      return cache.addAll([
+        '/',
+        '/index.html',
+        '/styles.css',
+        '/app.js',
+        '/manifest.json',
+        '/icon.png',
+        '/icon-512.png'
+      ]);
+    })
+  );
+});
+
+self.addEventListener('fetch', function(event) {
+  event.respondWith(
+    caches.match(event.request).then(function(response) {
+      return response || fetch(event.request);
+    })
+  );
+});
+
+function toggleDarkMode() {
+    document.body.classList.toggle('dark-mode');
+}
+
+function adjustFontSize() {
+    let body = document.body;
+    let currentSize = window.getComputedStyle(body).fontSize;
+    let newSize = parseInt(currentSize) + 2;
+    body.style.fontSize = newSize + 'px';
+}
